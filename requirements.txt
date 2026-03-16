@@ -1,5 +1,4 @@
-transformers==4.39.3
-torch==2.2.2
+# requirements.txt
 streamlit
 matplotlib
 seaborn
