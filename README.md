@@ -4,7 +4,7 @@
 > **감정 분석 결과**, **긍정/부정 분포**, **핵심 키워드**, **워드클라우드**를 시각화하여 보여주는 프로젝트입니다.
 
 🔗 **배포 링크**  
-https://baseball-eakcz9yj5vkkjrhbmbxjja.streamlit.app/
+[https://baseball-eakcz9yj5vkkjrhbmbxjja.streamlit.app/](https://sports-news-sentiment-analysis-bfhkkugoheypcu7kxjydbq.streamlit.app/)
 
 ---
 
