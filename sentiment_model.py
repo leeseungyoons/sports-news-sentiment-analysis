@@ -1,7 +1,17 @@
-import torch
+# sentiment_model.py
 from pathlib import Path
-from transformers import AutoTokenizer, AutoModelForSequenceClassification
-import torch.nn.functional as F
+
+try:
+    import torch
+    import torch.nn.functional as F
+    from transformers import AutoTokenizer, AutoModelForSequenceClassification
+    TRANSFORMER_AVAILABLE = True
+except Exception:
+    torch = None
+    F = None
+    AutoTokenizer = None
+    AutoModelForSequenceClassification = None
+    TRANSFORMER_AVAILABLE = False
 
 
 class SentimentAnalyzer:
@@ -9,34 +19,39 @@ class SentimentAnalyzer:
         base_dir = Path(__file__).resolve().parent
         model_dir = base_dir / "model"
 
-        self.use_fallback = False
+        self.use_fallback = True
+
+        self.positive_words = [
+            "승리", "대승", "역전승", "홈런", "활약", "맹타", "결승타", "극적인",
+            "끝내기", "무실점", "이기며", "완봉", "연승", "호투", "기세",
+            "눈부신", "역전극", "쾌조", "드라마틱", "MVP", "선발승",
+            "기록 경신", "놀라운", "완벽한", "압도적"
+        ]
+
+        self.negative_words = [
+            "패배", "병살타", "실책", "놓쳤다", "무득점", "패전", "무산", "부진",
+            "역전패", "부상", "이탈", "불안", "혹사", "탈락", "결장", "퇴장",
+            "공백", "논란", "낙하", "머리 부상", "병원", "사고", "사망",
+            "실망", "안전 사고", "애도", "위험", "의심", "충격", "취소", "중단"
+        ]
 
         weight_candidates = [
             model_dir / "pytorch_model.bin",
             model_dir / "model.safetensors",
         ]
 
-        if any(p.exists() for p in weight_candidates):
-            self.tokenizer = AutoTokenizer.from_pretrained(str(model_dir))
-            self.model = AutoModelForSequenceClassification.from_pretrained(str(model_dir))
-            self.model.eval()
+        if TRANSFORMER_AVAILABLE and any(p.exists() for p in weight_candidates):
+            try:
+                self.tokenizer = AutoTokenizer.from_pretrained(str(model_dir))
+                self.model = AutoModelForSequenceClassification.from_pretrained(str(model_dir))
+                self.model.eval()
+                self.use_fallback = False
+                print("[INFO] 학습 모델 로드 성공")
+            except Exception as e:
+                print(f"[WARN] 모델 로드 실패, fallback 모드로 전환: {e}")
+                self.use_fallback = True
         else:
-            print("[WARN] 모델 가중치가 없어 fallback 모드로 실행합니다.")
-            self.use_fallback = True
-
-            self.positive_words = [
-                "승리", "대승", "역전승", "홈런", "활약", "맹타", "결승타", "극적인",
-                "끝내기", "무실점", "이기며", "완봉", "연승", "호투", "기세",
-                "눈부신", "역전극", "쾌조", "드라마틱", "MVP", "선발승",
-                "기록 경신", "놀라운", "완벽한", "압도적"
-            ]
-
-            self.negative_words = [
-                "패배", "병살타", "실책", "놓쳤다", "무득점", "패전", "무산", "부진",
-                "역전패", "부상", "이탈", "불안", "혹사", "탈락", "결장", "퇴장",
-                "공백", "논란", "낙하", "머리 부상", "병원", "사고", "사망",
-                "실망", "안전 사고", "애도", "위험", "의심", "충격", "취소", "중단"
-            ]
+            print("[INFO] transformers/torch 또는 모델 가중치가 없어 fallback 모드로 실행합니다.")
 
     def predict(self, text):
         if not self.use_fallback:
